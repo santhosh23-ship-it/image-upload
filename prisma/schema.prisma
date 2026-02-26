@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(uuid())
+  name           String
+  email          String         @unique
+  password       String
+  role           Role           @default(USER)
+  organizationId String?
+  organization   Organization?  @relation("OrgUsers", fields: [organizationId], references: [id], onDelete: Cascade)
+  adminOf        Organization[] @relation("OrgAdmin")
+  isSystemAdmin  Boolean        @default(false)
+  imageQuota     Int            @default(5)
+  images         Image[]        @relation("UploadedImages")
+  imageUrls  String[] @default([])  
+  payments       Payment[]
+  fcmTokens      String[] @default([])
+  hidden         Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+}
+
+model Organization {
+  id            String         @id @default(uuid())
+  name          String
+  logoUrl       String?
+  address       String?
+  phone         String?
+  adminId       String?
+  admin         User?          @relation("OrgAdmin", fields: [adminId], references: [id], onDelete: SetNull)
+  users         User[]         @relation("OrgUsers")
+  images        Image[]
+  payments      Payment[]
+  imageQuota    Int            @default(5)
+  createdAt     DateTime       @default(now())
+}
+
+model Image {
+  id             String         @id @default(uuid())
+  url            String
+  uploadedById   String
+  uploadedBy     User           @relation("UploadedImages", fields: [uploadedById], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tags           String[]       @default([])
+  createdAt      DateTime       @default(now())
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  amount         Int
+  slotsPurchased Int
+  transactionId  String
+  status         PaymentStatus
+  createdAt      DateTime      @default(now())
+}
+
+
+enum Role {
+  PRODUCT_OWNER
+  ADMIN
+  USER
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}

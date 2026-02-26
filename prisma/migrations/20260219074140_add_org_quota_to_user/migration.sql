@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "orgQuota" INTEGER NOT NULL DEFAULT 0;

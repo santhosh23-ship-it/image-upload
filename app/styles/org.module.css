@@ -1,0 +1,68 @@
+.table {
+  text-align: center;
+  font-size: 14px;
+}
+
+.table th {
+  font-weight: 600;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+/* Increase row height by adding padding top & bottom */
+.table tbody tr td {
+  padding-top: 20px;    /* more vertical space */
+  padding-bottom: 20px; /* more vertical space */
+}
+
+.noLogo {
+  color: #999;
+}
+
+.logo {
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+.dashboardContainer {
+  max-width: 1000px;      /* width kammi */
+  margin: 40px auto;      /* center align */
+}
+
+.dashboardCard {
+  padding: 20px;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+
+  /* Add border radius to container wrapping the table */
+  border-radius: 12px;
+
+  /* Add subtle shadow or border to emphasize rounded container */
+  box-shadow: 0 0 8px rgb(0 0 0 / 0.1);
+  border: 1px solid #ddd;
+}
+
+/* Table style improve */
+.tableWrapper table {
+  width: 100%;
+  border-collapse: separate; /* separate needed for border-radius */
+  border-spacing: 0;
+  border-radius: 12px;        /* rounded corners on the table */
+  overflow: hidden;           /* clip overflow for border radius */
+}
+
+.tableWrapper th,
+.tableWrapper td {
+  padding: 12px 16px;
+}
+
+.tableWrapper th {
+  background-color: #f8f9fa;
+}
