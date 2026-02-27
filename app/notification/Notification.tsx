@@ -1,27 +1,15 @@
+// app/components/Notifications.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
 import { firestore } from "@/lib/firebaseClient";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
-
-type NotificationType = {
-  message: string;
-  createdAt: any;
-  isRead: boolean;
-};
+import { collection, query, where, onSnapshot, updateDoc, doc } from "firebase/firestore";
+import { notifications } from "@mantine/notifications";
 
 type Props = { userId: string };
 
-export default function NotificationsComponent({ userId }: Props) {
-  const isFirstLoad = useRef(true);
+export default function Notifications({ userId }: Props) {
+  const shownIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!userId) return;
@@ -29,25 +17,35 @@ export default function NotificationsComponent({ userId }: Props) {
     const q = query(
       collection(firestore, "notifications"),
       where("receiverId", "==", userId),
-      where("isRead", "==", false),
-      orderBy("createdAt", "desc")
+      where("isRead", "==", false)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (isFirstLoad.current) {
-        isFirstLoad.current = false;
-        return; // skip old notifications
-      }
-
-      snapshot.docChanges().forEach(async (change) => {
+    const unsubscribe = onSnapshot(q, snapshot => {
+      snapshot.docChanges().forEach(async change => {
         if (change.type === "added") {
-          const data = change.doc.data() as NotificationType;
+          const docId = change.doc.id;
+          if (shownIds.current.has(docId)) return;
+          shownIds.current.add(docId);
 
-          alert(`🔔 New Notification:\n\n${data.message}`);
+          const data = change.doc.data();
 
-          await updateDoc(doc(firestore, "notifications", change.doc.id), {
-            isRead: true,
+          // Show notification with image
+          notifications.show({
+            title: "🔔 Notification",
+            message: (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {data.imageUrl && (
+                  <img src={data.imageUrl} alt="Image" width={50} height={50} style={{ borderRadius: 4 }} />
+                )}
+                <span>{data.message}</span>
+              </div>
+            ),
+            color: "blue",
+            autoClose: 1000, // 1 second
           });
+
+          // Mark as read
+          await updateDoc(doc(firestore, "notifications", docId), { isRead: true });
         }
       });
     });

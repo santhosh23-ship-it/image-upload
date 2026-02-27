@@ -1,285 +1,159 @@
 "use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import useSWR from "swr";
+import { Card, Group, Image, Text, Badge, Button, Stack, Modal, ActionIcon, ScrollArea, Box, Title, Alert } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { IconPlus, IconTrash, IconAlertCircle } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
-import {
-  Card,
-  Button,
-  Group,
-  Image,
-  Text,
-  Stack,
-  Badge,
-  Alert,
-  Divider,
-} from "@mantine/core";
-import { Dropzone } from "@mantine/dropzone";
-import {
-  IconUpload,
-  IconPhoto,
-  IconX,
-  IconAlertCircle,
-  IconCreditCard,
-} from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import TagInput from "./tagInput";
 
-import NotificationsComponent from "@/app/notification/Notification";
-import TagInput from "@/app/(protected)/user/tagInput";
+const MAX_FREE_IMAGES = 5;
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-const MAX_IMAGES = 5;
+export default function GalleryDashboardPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const isAdmin = session?.user?.role === "ADMIN";
 
-export default function DashboardPage() {
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      window.location.href = "/login";
-    },
-  });
-
+  const { data: images = [], mutate } = useSWR("/api/user/images", fetcher, { refreshInterval: 5000 });
+  const [modalOpened, setModalOpened] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
   const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [limitError, setLimitError] = useState("");
-  const [serverError, setServerError] = useState("");
-  const [uploadedImages, setUploadedImages] = useState<{ url: string }[]>([]);
-  const [blockedFiles, setBlockedFiles] = useState<string[]>([]);
-
-  // ✅ Name + Role display
-  const displayName = session?.user
-    ? `${session.user.name} (${session.user.role?.toUpperCase() || "USER"})`
-    : "Someone (USER)";
-
-  const handleDrop = (acceptedFiles: File[]) => {
-    if (acceptedFiles.length > MAX_IMAGES) {
-      setLimitError(`Maximum ${MAX_IMAGES} images only allowed`);
-      return;
-    }
-    setLimitError("");
-    previews.forEach((url) => URL.revokeObjectURL(url));
-    setFiles(acceptedFiles);
-    setPreviews(acceptedFiles.map((f) => URL.createObjectURL(f)));
-  };
-
-  const handleTagSelect = (user: { id: string; name: string }) => {
-    if (!tags.find((t) => t.id === user.id))
-      setTags((prev) => [...prev, user]);
-  };
 
   const uploadImages = async () => {
-    if (!files.length) return alert("Select images first");
-
-    setLoading(true);
-    setServerError("");
-    setUploadedImages([]);
-    setBlockedFiles([]);
-
+    if (!files.length) return;
     const formData = new FormData();
-    files.forEach((file) => formData.append("files", file));
-    formData.append("tags", JSON.stringify(tags.map((t) => t.id)));
+    files.forEach(f => formData.append("files", f));
+    formData.append("tags", JSON.stringify(tags.map(t => t.id)));
 
-    try {
-      const res = await fetch("/api/images/upload", {
-        method: "POST",
-        body: formData,
-      });
+    const res = await fetch("/api/images/upload", { method: "POST", body: formData });
+    const data = await res.json();
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setServerError(data.error || "Upload failed");
-        return;
-      }
-
-      setUploadedImages(data.uploadedImages || []);
-      setBlockedFiles(data.blockedFiles || []);
-      setFiles([]);
-      setPreviews([]);
-      setTags([]);
-      setLimitError("");
-
-      alert("Upload success ✅");
-    } catch {
-      setServerError("Upload failed ❌");
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      notifications.show({ title: "Error", message: data.error || "Upload failed", color: "red", autoClose: 2000 });
+      return;
     }
+
+    notifications.show({ title: "Success", message: "Images uploaded", color: "green", autoClose: 2000 });
+    setModalOpened(false); setFiles([]); setTags([]); mutate();
   };
 
-  if (status === "loading") return <Text>Loading...</Text>;
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/user/images/${id}`, { method: "DELETE" });
+    notifications.show({ title: "Deleted", message: "Image deleted", color: "green", autoClose: 2000 });
+    mutate();
+  };
 
   return (
-    <Stack
-      align="center"
-      sx={{
-        minHeight: "100vh",
-        backgroundColor: "#efe3d0",
-        paddingTop: 40,
+    <div style={{ padding: 20 }}>
+      <Stack>
+        <Text fw={600}>Welcome, {session?.user?.name} ({isAdmin ? "Admin" : "User"})</Text>
+        {!isAdmin && <Alert icon={<IconAlertCircle size={16} />} title="Free Upload Limit" color="red">Only {MAX_FREE_IMAGES} images allowed.</Alert>}
+
+        <Group justify="space-between">
+          <Title order={3}>Gallery</Title>
+          <ActionIcon size="lg" color="blue" variant="filled" onClick={() => setModalOpened(true)}><IconPlus size={20} /></ActionIcon>
+        </Group>
+
+        <ScrollArea h={500}>
+          <Group gap="md" wrap="wrap">
+            {images.map(img => (
+              <Card key={img.id} shadow="sm" w={240}>
+                <Image src={img.url} height={140} radius="md" fit="cover" />
+                <Text size="xs" mt="xs">{new Date(img.createdAt).toLocaleDateString()}</Text>
+                <Text size="xs" c="dimmed">Uploaded by: {img.uploadedBy?.name}</Text>
+
+                {img.taggedUsers?.length > 0 && (
+                  <Box mt="xs">
+                    <Text size="xs" fw={500}>Tagged:</Text>
+                    <Group gap="xs" mt={4}>{img.taggedUsers.map(u => <Badge key={u.id} color="blue">{u.name}</Badge>)}</Group>
+                  </Box>
+                )}
+
+                <Button fullWidth mt="xs" color="red" size="xs" onClick={() => handleDelete(img.id)}>Delete</Button>
+              </Card>
+            ))}
+          </Group>
+        </ScrollArea>
+
+       <Modal
+  opened={modalOpened}
+  onClose={() => setModalOpened(false)}
+  title="Upload Images"
+  centered
+  size="md"
+  radius="lg"
+  overlayProps={{
+    blur: 4,
+    backgroundOpacity: 0.55,
+  }}
+  styles={{
+    header: {
+      backgroundColor: "#f8f5f2",
+      borderBottom: "1px solid #eee",
+    },
+    title: {
+      fontWeight: 600,
+      fontSize: "18px",
+    },
+    body: {
+      paddingTop: 20,
+      paddingBottom: 25,
+    },
+  }}
+>
+  <Stack gap="md">
+    <Box
+      p="md"
+      style={{
+        border: "2px dashed #d6ccc2",
+        borderRadius: "12px",
+        backgroundColor: "#fafafa",
+        textAlign: "center",
       }}
     >
-      {/* 🔔 Real-time Notification Listener */}
-      {session?.user?.id && (
-        <NotificationsComponent userId={session.user.id} />
-      )}
+      <input
+        type="file"
+        multiple
+        style={{ cursor: "pointer" }}
+        onChange={e => setFiles(Array.from(e.target.files || []))}
+      />
+    </Box>
 
-      <Card
-        shadow="md"
-        radius="lg"
-        p="xl"
-        w={520}
-        sx={{
-          backgroundColor: "#e6c9a8",
-          border: "1px solid #c19a6b",
-        }}
+    <TagInput
+      currentUserName={session?.user?.name || ""}
+      onTagSelect={t => setTags(prev => [...prev, t])}
+    />
+
+    <Button
+      fullWidth
+      disabled={files.length === 0}
+      onClick={uploadImages}
+      style={{
+        backgroundColor: "#5c4033",
+        color: "white",
+        fontWeight: 600,
+      }}
+      radius="md"
+    >
+      Upload Images
+    </Button>
+
+    {!isAdmin && (
+      <Button
+        fullWidth
+        variant="outline"
+        color="blue"
+        radius="md"
+        onClick={() => router.push("/payment")}
       >
-        {/* Welcome message with name + role */}
-        <Text fw={600} mb="md" size="lg">
-          Welcome, {displayName}!
-        </Text>
-
-        <Alert
-          icon={<IconAlertCircle size={18} />}
-          color="red"
-          radius="md"
-          mb="md"
-        >
-          Maximum <b>{MAX_IMAGES}</b> images only allowed
-        </Alert>
-
-        {serverError && (
-          <Alert color="red" radius="md" mb="md">
-            {serverError}
-          </Alert>
-        )}
-
-        <Dropzone
-          onDrop={handleDrop}
-          multiple
-          accept={["image/png", "image/jpeg", "image/jpg"]}
-          styles={{
-            root: {
-              border: "2px dashed #8b5e3c",
-              borderRadius: 14,
-              backgroundColor: "#f5e3cf",
-            },
-          }}
-        >
-          <Group justify="center" gap="xl" mih={160}>
-            <Dropzone.Accept>
-              <IconUpload size={50} />
-            </Dropzone.Accept>
-            <Dropzone.Reject>
-              <IconX size={50} />
-            </Dropzone.Reject>
-            <Dropzone.Idle>
-              <IconPhoto size={50} />
-            </Dropzone.Idle>
-
-            <Stack align="center" gap={4}>
-              <Text fw={600}>Drop your image here, or browse</Text>
-              <Text size="sm" c="dimmed">
-                JPG, JPEG, PNG (max {MAX_IMAGES})
-              </Text>
-            </Stack>
-          </Group>
-        </Dropzone>
-
-        {limitError && (
-          <Text c="red" size="sm" mt="xs">
-            {limitError}
-          </Text>
-        )}
-
-        {/* TagInput with display name */}
-        <Stack mt="md">
-          <TagInput currentUserName={displayName} onTagSelect={handleTagSelect} />
-
-          <Group gap="xs">
-            {tags.map((t) => (
-              <Badge
-                key={t.id}
-                sx={{ backgroundColor: "#8b5e3c", color: "white" }}
-              >
-                {t.name}
-              </Badge>
-            ))}
-          </Group>
-        </Stack>
-
-        {previews.length > 0 && (
-          <Group mt="md">
-            {previews.map((url, i) => (
-              <Image
-                key={i}
-                src={url}
-                width={90}
-                height={90}
-                radius="md"
-                alt="preview"
-              />
-            ))}
-          </Group>
-        )}
-
-        <Button
-          fullWidth
-          mt="lg"
-          loading={loading}
-          disabled={!!limitError || !files.length}
-          onClick={uploadImages}
-          sx={{
-            backgroundColor: "#5a3825",
-            color: "white",
-            fontWeight: 600,
-            "&:hover": { backgroundColor: "#47291a" },
-          }}
-        >
-          Upload
-        </Button>
-
-        <Divider my="md" />
-
-        {uploadedImages.length > 0 && (
-          <Stack>
-            <Text fw={600}>Uploaded Images:</Text>
-            <Group spacing="xs">
-              {uploadedImages.map((img, i) => (
-                <Image
-                  key={i}
-                  src={img.url}
-                  width={90}
-                  height={90}
-                  radius="md"
-                  alt="uploaded"
-                />
-              ))}
-            </Group>
-          </Stack>
-        )}
-
-        {blockedFiles.length > 0 && (
-          <Alert color="yellow" radius="md" mt="md">
-            Some files were blocked due to quota: {blockedFiles.join(", ")}
-          </Alert>
-        )}
-
-        <Button
-          fullWidth
-          leftSection={<IconCreditCard size={18} />}
-          variant="outline"
-          sx={{
-            borderColor: "#5a3825",
-            color: "#5a3825",
-            fontWeight: 600,
-            "&:hover": {
-              backgroundColor: "#5a3825",
-              color: "white",
-            },
-          }}
-          onClick={() => window.location.href = `/payment/${session?.user?.id}`}
-        >
-          Proceed to Payment
-        </Button>
-      </Card>
-    </Stack>
+        Go to Payment Page
+      </Button>
+    )}
+  </Stack>
+</Modal>
+      </Stack>
+    </div>
   );
 }

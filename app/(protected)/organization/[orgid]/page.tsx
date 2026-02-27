@@ -14,6 +14,7 @@ import {
   Group,
   Loader,
   Center,
+  Container,
 } from "@mantine/core";
 import UserList from "../components/UserList";
 import AdminList from "../components/AdminList";
@@ -33,129 +34,116 @@ export default function OrganizationDetailsPage() {
         const res = await fetch(`/api/organization/${orgId}`);
         const data = await res.json();
         setOrg(data);
-      } catch (error) {
-        console.error("Failed to fetch org");
       } finally {
         setLoading(false);
       }
     };
-
     if (orgId) fetchOrg();
   }, [orgId]);
 
   const handleSelectAdmin = async (adminId: string) => {
     const res = await fetch(`/api/admin/users/${adminId}`);
     const data = await res.json();
-
     setSelectedAdmin(data.admin);
     setAdminUsers(data.users || []);
   };
 
-  if (loading) {
+  if (loading)
     return (
-      <Center mt={80}>
+      <Center h="70vh">
         <Loader size="lg" />
       </Center>
     );
-  }
 
-  if (!org) {
+  if (!org)
     return (
-      <Center mt={80}>
+      <Center h="70vh">
         <Text fw={500}>Organization not found</Text>
       </Center>
     );
-  }
 
   const admins = org.users.filter((u: any) => u.role === "ADMIN");
 
   return (
-    <Box p="xl" style={{ backgroundColor: "#faf5ec", minHeight: "100vh" }}>
-      <Stack spacing="xl">
+    <Box bg="#f8f9fa" mih="100vh" py={40}>
+      <Container size="lg">
 
-        {/* ================= ORGANIZATION HEADER ================= */}
-        <Card shadow="sm" padding="lg" radius="md" withBorder bg="#e6ccb2">
-          <Group justify="space-between">
-            <Title order={2}>{org.name}</Title>
-            <Badge size="lg" color="brown" variant="light">
-              {admins.length} Admins
-            </Badge>
-          </Group>
-        </Card>
+        <Stack gap="xl">
 
-        {/* ================= ADMIN LIST ================= */}
-        <Card shadow="sm" padding="lg" radius="md" withBorder bg="#f0d9c2">
-          <Stack spacing="md">
-            <Title order={4}>Admins</Title>
-            <Divider />
-            <AdminList admins={admins} onSelectAdmin={handleSelectAdmin} />
-          </Stack>
-        </Card>
+          {/* Organization Header */}
+          <Card shadow="sm" radius="lg" p="xl" withBorder>
+            <Group justify="space-between">
+              <Title order={2}>{org.name}</Title>
+              <Badge size="lg" color="dark" variant="light">
+                {admins.length} Admins
+              </Badge>
+            </Group>
+          </Card>
 
-        {/* ================= ADMIN DETAILS ================= */}
-        {selectedAdmin && (
-          <>
-            <Card shadow="sm" padding="lg" radius="md" withBorder bg="#f5e0c3">
-              <Stack spacing="md">
-                <Title order={4}>
-                  Admin Details
-                </Title>
-                <Divider />
+          {/* Admin Section */}
+          <Card shadow="sm" radius="lg" p="xl" withBorder>
+            <Stack>
+              <Title order={4}>Admins</Title>
+              <Divider />
+              <AdminList
+                admins={admins}
+                onSelectAdmin={handleSelectAdmin}
+                selectedAdminId={selectedAdmin?.id}
+              />
+            </Stack>
+          </Card>
 
-                <Grid>
-                  <Grid.Col span={6}>
-                    <Text fw={600}>Name</Text>
-                    <Text>{selectedAdmin.name}</Text>
-                  </Grid.Col>
+          {selectedAdmin && (
+            <>
+              {/* Admin Details */}
+              <Card shadow="sm" radius="lg" p="xl" withBorder>
+                <Stack>
+                  <Title order={4}>Admin Details</Title>
+                  <Divider />
 
-                  <Grid.Col span={6}>
-                    <Text fw={600}>Email</Text>
-                    <Text>{selectedAdmin.email}</Text>
-                  </Grid.Col>
+                  <Grid>
+                    <Grid.Col span={6}>
+                      <Text fw={600}>Name</Text>
+                      <Text>{selectedAdmin.name}</Text>
+                    </Grid.Col>
 
-                  <Grid.Col span={6}>
-                    <Text fw={600}>Images Uploaded</Text>
-                    <Badge color="grape" variant="light">
-                      {selectedAdmin.imageCount ?? 0}
-                    </Badge>
-                  </Grid.Col>
+                    <Grid.Col span={6}>
+                      <Text fw={600}>Email</Text>
+                      <Text>{selectedAdmin.email}</Text>
+                    </Grid.Col>
 
-                  <Grid.Col span={6}>
-                    <Text fw={600}>Payment Status</Text>
-                    {selectedAdmin.paymentDone ? (
-                      <Badge color="green" variant="filled">
-                        Done
+                    <Grid.Col span={6}>
+                      <Text fw={600}>Images Uploaded</Text>
+                      <Badge color="grape" variant="light">
+                        {selectedAdmin.imageCount ?? 0}
                       </Badge>
-                    ) : (
-                      <Badge color="red" variant="filled">
-                        Nil
+                    </Grid.Col>
+
+                    <Grid.Col span={6}>
+                      <Text fw={600}>Total Users</Text>
+                      <Badge color="blue" variant="light">
+                        {adminUsers.length}
                       </Badge>
-                    )}
-                  </Grid.Col>
+                    </Grid.Col>
+                  </Grid>
+                </Stack>
+              </Card>
 
-                  <Grid.Col span={6}>
-                    <Text fw={600}>Total Users</Text>
-                    <Badge color="blue" variant="light">
-                      {adminUsers.length}
-                    </Badge>
-                  </Grid.Col>
-                </Grid>
-              </Stack>
-            </Card>
+              {/* Users */}
+              <Card shadow="sm" radius="lg" p="xl" withBorder>
+                <Stack>
+                  <Title order={4}>
+                    Users Under {selectedAdmin.name}
+                  </Title>
+                  <Divider />
+                  <UserList users={adminUsers} orgId={orgId} />
+                </Stack>
+              </Card>
+            </>
+          )}
+        </Stack>
 
-            {/* ================= USERS SECTION ================= */}
-            <Card shadow="sm" padding="lg" radius="md" withBorder bg="#fff4e6">
-              <Stack spacing="md">
-                <Title order={4}>
-                  Users Under {selectedAdmin.name}
-                </Title>
-                <Divider />
-                <UserList users={adminUsers} orgId={orgId} />
-              </Stack>
-            </Card>
-          </>
-        )}
-      </Stack>
+      </Container>
     </Box>
   );
 }

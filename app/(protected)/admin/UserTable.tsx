@@ -42,7 +42,6 @@ export default function UserTable({
   onEdit,
   onDelete,
 }: Props) {
-
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
 
@@ -58,26 +57,53 @@ export default function UserTable({
     }
   };
 
-  if (loading) return <Loader mt="xl" />;
+  if (loading)
+    return (
+      <Group justify="center" mt="xl">
+        <Loader size="lg" />
+      </Group>
+    );
 
   const visibleUsers = users.filter(
     (user) => user.role !== "PRODUCT_OWNER"
   );
 
   if (visibleUsers.length === 0)
-    return <Text mt="md">No users available.</Text>;
+    return (
+      <Text ta="center" mt="md" c="dimmed">
+        No users available.
+      </Text>
+    );
 
   return (
     <Paper
-      shadow="sm"
-      p="md"
-      radius="md"
-      style={{ overflowX: "auto", backgroundColor: "#f5f1ec" }}
+      shadow="lg"
+      p="xl"
+      radius="lg"
+      style={{
+        backgroundColor: "white",
+        overflowX: "auto",
+        border: "1px solid #eee",
+      }}
     >
-      <Table striped highlightOnHover>
+      <Table
+        striped
+        highlightOnHover
+        horizontalSpacing="lg"
+        verticalSpacing="md"
+        style={{
+          borderCollapse: "separate",
+          borderSpacing: "0 8px",
+        }}
+      >
         <thead>
-          <tr>
-            <th>Name</th>
+          <tr
+            style={{
+              backgroundColor: "#f3ebe4",
+              borderRadius: "10px",
+            }}
+          >
+            <th style={{ padding: "12px" }}>Name</th>
             <th>Email</th>
             <th>Role</th>
             <th>Uploads</th>
@@ -89,26 +115,35 @@ export default function UserTable({
 
         <tbody>
           {visibleUsers.map((user) => (
-            <tr key={user.id}>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
-              <td>{user.role}</td>
+            <tr
+              key={user.id}
+              style={{
+                backgroundColor: "#fafafa",
+                borderRadius: "8px",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <td style={{ fontWeight: 600 }}>{user.name}</td>
+              <td style={{ color: "#555" }}>{user.email}</td>
 
-              {/* Upload Count */}
+              <td>
+                <Badge color="blue" variant="light" radius="sm">
+                  {user.role}
+                </Badge>
+              </td>
+
               <td>
                 <Badge color="grape" variant="light">
                   {user._count?.images ?? 0}
                 </Badge>
               </td>
 
-              {/* Payment Count */}
               <td>
                 <Badge color="green" variant="light">
                   {user._count?.payments ?? 0}
                 </Badge>
               </td>
 
-              {/* Status */}
               <td>
                 {user.hidden ? (
                   <Badge color="gray" variant="outline">
@@ -121,12 +156,15 @@ export default function UserTable({
                 )}
               </td>
 
-              {/* Actions */}
               <td>
                 <Group gap="xs">
                   <Button
                     size="xs"
-                    bg="#5c4033"
+                    style={{
+                      backgroundColor: "#5c4033",
+                      color: "white",
+                    }}
+                    radius="md"
                     onClick={() => onEdit(user)}
                   >
                     Edit
@@ -135,6 +173,7 @@ export default function UserTable({
                   <Button
                     size="xs"
                     color="red"
+                    radius="md"
                     onClick={() => handleDelete(user.id)}
                   >
                     Delete

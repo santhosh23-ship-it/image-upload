@@ -7,10 +7,8 @@ import {
   Title,
   Text,
   Container,
-  Stack,
   Group,
   Card,
-  Center,
   Box,
 } from "@mantine/core";
 import OrgForm from "@/app/(protected)/organization/orgForm";
@@ -29,21 +27,18 @@ export default function Page() {
   };
 
   useEffect(() => {
-    if (status === "authenticated") {
-      load();
-    }
+    if (status === "authenticated") load();
   }, [status]);
 
-  if (status === "loading") return <Text>Loading...</Text>;
+  if (status === "loading") return <Text ta="center">Loading...</Text>;
 
   if (status === "unauthenticated") {
     return (
-      <Container size="sm" py="xl" style={{ textAlign: "center" }}>
-        <Title order={2}>You must be logged in</Title>
-        <Text size="sm" mb="md">
-          Redirecting to login...
-        </Text>
-        <Button onClick={() => signIn()}>Login</Button>
+      <Container size="sm" py="xl" ta="center">
+        <Title order={2}>Login Required</Title>
+        <Button mt="md" onClick={() => signIn()}>
+          Login
+        </Button>
       </Container>
     );
   }
@@ -51,45 +46,41 @@ export default function Page() {
   return (
     <Box
       style={{
-        backgroundColor: "#faf5ec",
+        background: "#f8f5f2",
         minHeight: "100vh",
-        padding: "30px",
+        padding: "50px 20px",
       }}
     >
-      <Box style={{ maxWidth: "1100px", margin: "0 auto" }}>
-        {/* Center Title */}
-        <Center>
-          <Title order={2} mb="lg" style={{ color: "#4b2e2b" }}>
+      <Container size="lg">
+
+        {/* Header Row */}
+        <Group justify="space-between" mb="xl">
+          <Title order={2} fw={700}>
             Organization Details
           </Title>
-        </Center>
 
-        {/* Button Right Side */}
-        <Group justify="flex-end" mb="md">
           <Button
+            radius="md"
+            size="md"
+            variant="filled"
+            color="dark"
             onClick={() => {
               setEditData(null);
               setOpen(true);
             }}
-            style={{
-              backgroundColor: "#5c4033",
-              color: "white",
-              fontWeight: 600,
-              transition: "0.3s",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4b2e2b")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#5c4033")
-            }
           >
-            Create Organization
+            + Create Organization
           </Button>
         </Group>
 
-        {/* Table inside Card */}
-        <Card shadow="sm" radius="md" padding="md" withBorder>
+        {/* SINGLE CLEAN CARD */}
+        <Card
+          shadow="md"
+          radius="lg"
+          padding="xl"
+          withBorder
+          style={{ backgroundColor: "white" }}
+        >
           <OrgTable
             orgs={orgs}
             onEdit={(org: any) => {
@@ -100,14 +91,13 @@ export default function Page() {
           />
         </Card>
 
-        {/* Modal Form */}
         <OrgForm
           opened={open}
           onClose={() => setOpen(false)}
           onSuccess={load}
           editData={editData}
         />
-      </Box>
+      </Container>
     </Box>
   );
 }

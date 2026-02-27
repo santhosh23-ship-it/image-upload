@@ -1,9 +1,8 @@
-// lib/firebase.ts
 "use client";
 
 import { initializeApp, getApps } from "firebase/app";
-import { getMessaging, getToken as firebaseGetToken } from "firebase/messaging";
 import { getFirestore } from "firebase/firestore";
+import { getMessaging, getToken } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -15,37 +14,26 @@ const firebaseConfig = {
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+
+// Firestore export
 const firestore = getFirestore(app);
 
-// ✅ Only initialize messaging in browser
-let messaging: ReturnType<typeof getMessaging> | null = null;
-if (typeof window !== "undefined") {
-  messaging = getMessaging(app);
-}
+// Messaging export
+const messaging = typeof window !== "undefined" ? getMessaging(app) : null;
 
-// ✅ Wrap getToken in client-only function
-export async function getFCMToken() {
-  if (typeof window === "undefined") return null;
+// ✅ New function to get FCM token
+async function getFCMToken() {
   if (!messaging) return null;
 
   try {
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      console.log("Notification permission not granted");
-      return null;
-    }
-
-    const token = await firebaseGetToken(messaging, {
-      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+    const token = await getToken(messaging, {
+      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY!,
     });
-
     return token;
   } catch (err) {
-    console.error("FCM getToken error:", err);
+    console.error("Error getting FCM token:", err);
     return null;
   }
 }
 
-
-
-export { messaging, firestore };
+export { firestore, messaging, getFCMToken };

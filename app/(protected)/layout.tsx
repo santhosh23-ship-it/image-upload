@@ -45,5 +45,6 @@ export default function ProtectedLayout({
 
       <AppShell.Main>{children}</AppShell.Main>
     </AppShell>
+    
   );
 }

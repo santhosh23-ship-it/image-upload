@@ -1,36 +1,38 @@
 "use client";
-
-import { Table, Title, Box } from "@mantine/core";
+import { Table, Box } from "@mantine/core";
 
 export default function AdminList({
   admins,
   onSelectAdmin,
-}: {
-  admins: any[];
-  onSelectAdmin: (adminId: string) => void;  // ✅ accept id
-}) {
+  selectedAdminId,
+}: any) {
   return (
     <Box style={{ overflowX: "auto" }}>
-      <Title order={4} mb="sm" ta="center">
-        Admins
-      </Title>
-
-      <Table striped highlightOnHover>
+      <Table striped highlightOnHover withColumnBorders>
         <thead>
           <tr>
             <th>Name</th>
             <th>Email</th>
           </tr>
         </thead>
-
         <tbody>
-          {admins.map((admin) => (
-            <tr key={admin.id}>
+          {admins.map((admin: any) => (
+            <tr
+              key={admin.id}
+              style={{
+                backgroundColor:
+                  admin.id === selectedAdminId
+                    ? "#f1f3f5"
+                    : "transparent",
+              }}
+            >
               <td>{admin.name}</td>
-
               <td
-                style={{ cursor: "pointer", color: "#5c4033" }}
-                onClick={() => onSelectAdmin(admin.id)}  // ✅ pass id
+                style={{
+                  cursor: "pointer",
+                  fontWeight: 600,
+                }}
+                onClick={() => onSelectAdmin(admin.id)}
               >
                 {admin.email}
               </td>

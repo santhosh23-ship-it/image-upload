@@ -5,23 +5,26 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 /* =====================================================
-   ✅ GET SINGLE USER / ADMIN
+   ✅ GET USERS UNDER AN ADMIN (ONLY ROLE = USER)
 ===================================================== */
 export async function GET(
   req: Request,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(
-        { error: "ID missing" },
+        { error: "Admin ID missing" },
         { status: 400 }
       );
     }
 
-    const user = await prisma.user.findUnique({
+    /* ===============================
+       🔹 GET ADMIN DETAILS
+    =============================== */
+    const admin = await prisma.user.findUnique({
       where: { id },
       include: {
         _count: { select: { images: true } },
@@ -32,28 +35,65 @@ export async function GET(
       },
     });
 
-    if (!user) {
+    if (!admin) {
       return NextResponse.json(
-        { error: "User not found" },
+        { error: "Admin not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        imageCount: user._count.images,
-        paymentCount: user.payments.length,
-        paymentDone: user.payments.length > 0,
+    /* ===============================
+       🔹 FIND ORGS MANAGED BY ADMIN
+    =============================== */
+    const orgs = await prisma.organization.findMany({
+      where: { adminId: id },
+      select: { id: true },
+    });
+
+    if (!orgs.length) {
+      return NextResponse.json({
+        success: true,
+        admin: {
+          id: admin.id,
+          name: admin.name,
+          email: admin.email,
+          imageCount: admin._count.images,
+        },
+        users: [],
+      });
+    }
+
+    const orgIds = orgs.map((o) => o.id);
+
+    /* ===============================
+       🔹 GET ONLY USERS (NOT ADMIN)
+    =============================== */
+    const users = await prisma.user.findMany({
+      where: {
+        organizationId: { in: orgIds },
+        role: "USER", // ✅ ONLY USERS
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
       },
     });
 
+    return NextResponse.json({
+      success: true,
+      admin: {
+        id: admin.id,
+        name: admin.name,
+        email: admin.email,
+        imageCount: admin._count.images,
+        paymentDone: admin.payments.length > 0,
+      },
+      users,
+    });
+
   } catch (error) {
-    console.error("GET Error:", error);
+    console.error("GET Admin Users Error:", error);
     return NextResponse.json(
       { error: "Server error" },
       { status: 500 }
@@ -61,15 +101,15 @@ export async function GET(
   }
 }
 
-
 /* =====================================================
    ✅ UPDATE USER
 ===================================================== */
 export async function PUT(
-  req: Request,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
@@ -79,35 +119,8 @@ export async function PUT(
       );
     }
 
-    const { id } = await context.params;
-
-    if (!id) {
-      return NextResponse.json(
-        { message: "User ID missing" },
-        { status: 400 }
-      );
-    }
-
-    const body = await req.json();
+    const body = await request.json();
     const { name, email, password, role } = body;
-
-    const existingUser = await prisma.user.findUnique({
-      where: { id },
-    });
-
-    if (!existingUser) {
-      return NextResponse.json(
-        { message: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    if (existingUser.organizationId !== session.user.organizationId) {
-      return NextResponse.json(
-        { message: "Not allowed" },
-        { status: 403 }
-      );
-    }
 
     let hashedPassword;
     if (password && password.trim() !== "") {
@@ -138,80 +151,27 @@ export async function PUT(
   }
 }
 
-
 /* =====================================================
-   ✅ DELETE USER (Fully Debugged Version)
+   ✅ DELETE USER
 ===================================================== */
 export async function DELETE(
-  req: Request,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session) {
-      console.log("❌ No session found");
       return NextResponse.json(
         { message: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    const { id } = await context.params;
-
-    if (!id) {
-      console.log("❌ ID missing");
-      return NextResponse.json(
-        { message: "User ID missing" },
-        { status: 400 }
-      );
-    }
-
-    console.log("🟡 DELETE REQUEST ID:", id);
-    console.log("🟡 SESSION USER:", session.user);
-
-    const user = await prisma.user.findUnique({
-      where: { id },
-    });
-
-    console.log("🟡 DB USER:", user);
-
-    if (!user) {
-      console.log("❌ User not found in DB");
-      return NextResponse.json(
-        { message: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    /* ===============================
-       ORG SECURITY CHECK
-    =============================== */
-
-    // If your session has organizationId
-    if (
-      session.user.organizationId &&
-      user.organizationId !== session.user.organizationId
-    ) {
-      console.log("❌ Organization mismatch");
-      console.log("User Org:", user.organizationId);
-      console.log("Session Org:", session.user.organizationId);
-
-      return NextResponse.json(
-        { message: "Not allowed" },
-        { status: 403 }
-      );
-    }
-
-    /* ===============================
-       DELETE
-    =============================== */
-
     await prisma.user.delete({
       where: { id },
     });
-
-    console.log("✅ User deleted successfully");
 
     return NextResponse.json({
       success: true,
@@ -219,7 +179,7 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error("🔥 DELETE ERROR:", error);
+    console.error("DELETE ERROR:", error);
     return NextResponse.json(
       { message: "Server error" },
       { status: 500 }

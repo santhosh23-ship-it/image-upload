@@ -9,7 +9,6 @@ export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-
   const [activeButton, setActiveButton] = useState<string>("");
 
   // 🔐 Protect route
@@ -22,78 +21,81 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!pathname) return;
 
-    if (pathname.includes("/organization")) setActiveButton("organization");
-    else if (pathname.includes("/dashboard")) setActiveButton("orgDashboard");
-
-    else if (pathname.includes("/admin/dashboard")) setActiveButton("admin");
-    else if (pathname.includes("/user/dashboard") && !pathname.includes("/admin")) setActiveButton("userManagement");
-    else if (pathname.includes("/admin/gallery")) setActiveButton("adminGallery");
-
-    else if (pathname.includes("/user/dashboard") && !pathname.includes("/admin")) setActiveButton("user");
-    else if (pathname.includes("/user/gallery")) setActiveButton("userGallery");
+    if (pathname.includes("/organization"))
+      setActiveButton("organization");
+    else if (pathname.includes("/dashboard"))
+      setActiveButton("dashboard");
+    else if (pathname.includes("/admin") && !pathname.includes("/gallery"))
+      setActiveButton("admin");
+    else if (pathname.includes("/user") && !pathname.includes("/gallery"))
+      setActiveButton("user");
   }, [pathname]);
 
-  if (status === "loading") return <Text ta="center">Loading...</Text>;
+  if (status === "loading")
+    return <Text ta="center">Loading...</Text>;
+
   if (!session) return null;
 
   const role = session.user.role;
-  const userId = session.user.id;
-
-  // Helper to style buttons — active = filled, inactive = outline
-  const getButtonStyle = (name: string) => {
-    if (activeButton === name) {
-      return {
-        backgroundColor: "#5c4033",
-        color: "white",
-        fontWeight: 600,
-      };
-    }
-    return {
-      border: "2px solid #5c4033",
-      color: "#5c4033",
-      fontWeight: 600,
-      backgroundColor: "transparent",
-    };
-  };
 
   return (
     <Box
       style={{
         minHeight: "100vh",
-        backgroundColor: "#faf5ec",
-        padding: "30px",
+        background: "linear-gradient(135deg, #1e1e2f, #302b63, #24243e)",
         display: "flex",
-        justifyContent: "center",
+        alignItems: "center",
+        paddingLeft: "20px",
+        paddingRight:"20px",
+        paddingBottom:"390px",
       }}
     >
-      <Stack p="xl" gap="lg" align="center">
-        <Card
-          shadow="sm"
-          padding="lg"
-          radius="md"
-          withBorder
-          style={{
-            width: "100%",
-            maxWidth: 400,
-            backgroundColor: "#e6ccb2",
-          }}
-        >
-          <Stack gap="sm">
+      <Card
+        shadow="xl"
+        radius="22px"
+        padding="28px"
+        style={{
+          width: 420,
+          backdropFilter: "blur(18px)",
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          color: "white",
+          padding:"21px"
+        }}
+      >
+        <Stack gap="lg">
 
-            {/* ================= PRODUCT OWNER ================= */}
+          <Text
+            ta="center"
+            fw={800}
+            style={{
+              fontSize: "18px",
+              letterSpacing: "1px",
+            }}
+          >
+            {role} PANEL
+          </Text>
+
+          <Stack gap="md">
+
+            {/* PRODUCT OWNER */}
             {role === "PRODUCT_OWNER" && (
               <>
-                <Text fw={600} ta="center">
-                  Product Owner Actions
-                </Text>
-
-                
                 <Button
                   fullWidth
-                  style={getButtonStyle("orgDashboard")}
+                  radius="xl"
+                  style={{
+                    background:
+                      activeButton === "dashboard"
+                        ? "linear-gradient(90deg,#ff9a9e,#fad0c4)"
+                        : "rgba(255,255,255,0.15)",
+                    color:
+                      activeButton === "dashboard" ? "#222" : "white",
+                    fontWeight: 600,
+                  }}
                   onClick={() => {
-                    setActiveButton("orgDashboard");
-                    router.push(`/dashboard`);
+                    setActiveButton("dashboard");
+                    router.push("/dashboard");
                   }}
                 >
                   Dashboard
@@ -101,84 +103,109 @@ export default function DashboardPage() {
 
                 <Button
                   fullWidth
-                  style={getButtonStyle("organization")}
+                  radius="xl"
+                  style={{
+                    background:
+                      activeButton === "organization"
+                        ? "linear-gradient(90deg,#a18cd1,#fbc2eb)"
+                        : "rgba(255,255,255,0.15)",
+                    color:
+                      activeButton === "organization" ? "#222" : "white",
+                    fontWeight: 600,
+                  }}
                   onClick={() => {
                     setActiveButton("organization");
-                    router.push(`/organization`);
+                    router.push("/organization");
                   }}
                 >
                   Organization
                 </Button>
-
               </>
             )}
 
-            {/* ================= ADMIN ================= */}
+            {/* ADMIN */}
             {role === "ADMIN" && (
               <>
-              
-                <Text fw={700} ta="center">
-                  Admin 
-                </Text>
-                  
                 <Button
                   fullWidth
-                  style={getButtonStyle("orgDashboard")}
+                  radius="xl"
+                  style={{
+                    background:
+                      activeButton === "dashboard"
+                        ? "linear-gradient(90deg,#ff9a9e,#fad0c4)"
+                        : "rgba(255,255,255,0.15)",
+                    color:
+                      activeButton === "dashboard" ? "#222" : "white",
+                    fontWeight: 600,
+                  }}
                   onClick={() => {
-                    setActiveButton("orgDashboard");
-                    router.push(`/dashboard`);
+                    setActiveButton("dashboard");
+                    router.push("/dashboard");
                   }}
                 >
                   Dashboard
                 </Button>
+
                 <Button
                   fullWidth
-                  style={getButtonStyle("admin")}
+                  radius="xl"
+                  style={{
+                    background:
+                      activeButton === "admin"
+                        ? "linear-gradient(90deg,#f6d365,#fda085)"
+                        : "rgba(255,255,255,0.15)",
+                    color:
+                      activeButton === "admin" ? "#222" : "white",
+                    fontWeight: 600,
+                  }}
                   onClick={() => {
                     setActiveButton("admin");
-                    router.push(`/admin`);
+                    router.push("/admin");
                   }}
                 >
-                  Admin Dashboard
+                  Admin Panel
                 </Button>
 
                 <Button
                   fullWidth
-                  style={getButtonStyle("userManagement")}
+                  radius="xl"
+                  style={{
+                    background:
+                      activeButton === "user"
+                        ? "linear-gradient(90deg,#84fab0,#8fd3f4)"
+                        : "rgba(255,255,255,0.15)",
+                    color:
+                      activeButton === "user" ? "#222" : "white",
+                    fontWeight: 600,
+                  }}
                   onClick={() => {
-                    setActiveButton("userManagement");
-                    router.push(`/user`);
+                    setActiveButton("user");
+                    router.push("/user");
                   }}
                 >
-                  User 
-                </Button>
-
-                <Button
-                  fullWidth
-                  style={getButtonStyle("adminGallery")}
-                  onClick={() => {
-                    setActiveButton("adminGallery");
-                    router.push(`/admin/gallery/${userId}`);
-                  }}
-                >
-                  Admin Galler
+                  Admin Gallery
                 </Button>
               </>
             )}
 
-            {/* ================= USER ================= */}
+            {/* USER */}
             {role === "USER" && (
               <>
-                <Text fw={700} ta="center">
-                  User Actions
-                </Text>
-                
                 <Button
                   fullWidth
-                  style={getButtonStyle("orgDashboard")}
+                  radius="xl"
+                  style={{
+                    background:
+                      activeButton === "dashboard"
+                        ? "linear-gradient(90deg,#ff9a9e,#fad0c4)"
+                        : "rgba(255,255,255,0.15)",
+                    color:
+                      activeButton === "dashboard" ? "#222" : "white",
+                    fontWeight: 600,
+                  }}
                   onClick={() => {
-                    setActiveButton("orgDashboard");
-                    router.push(`/dashboard`);
+                    setActiveButton("dashboard");
+                    router.push("/dashboard");
                   }}
                 >
                   Dashboard
@@ -186,31 +213,29 @@ export default function DashboardPage() {
 
                 <Button
                   fullWidth
-                  style={getButtonStyle("user")}
+                  radius="xl"
+                  style={{
+                    background:
+                      activeButton === "user"
+                        ? "linear-gradient(90deg,#84fab0,#8fd3f4)"
+                        : "rgba(255,255,255,0.15)",
+                    color:
+                      activeButton === "user" ? "#222" : "white",
+                    fontWeight: 600,
+                  }}
                   onClick={() => {
                     setActiveButton("user");
-                    router.push(`/user`);
+                    router.push("/user");
                   }}
                 >
-                  User 
-                </Button>
-
-                <Button
-                  fullWidth
-                  style={getButtonStyle("userGallery")}
-                  onClick={() => {
-                    setActiveButton("userGallery");
-                    router.push(`/user/gallery`);
-                  }}
-                >
-                  User Gallery
+                  User Page
                 </Button>
               </>
             )}
 
           </Stack>
-        </Card>
-      </Stack>
+        </Stack>
+      </Card>
     </Box>
   );
 }

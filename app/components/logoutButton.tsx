@@ -15,19 +15,23 @@ export default function LogoutButton() {
   return (
     <Button
       onClick={handleLogout}
+      radius="xl"
       style={{
-        backgroundColor: "#5c4033", // dark brown
-        color: "white",
+        background: "linear-gradient(90deg, #a18cd1, #fbc2eb)",
+        color: "#1e1e2f",
         fontWeight: 600,
-        transition: "0.3s",
+        padding: "8px 22px",
+        transition: "all 0.3s ease",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-          "#4b2e2b"; // hover dark
+        e.currentTarget.style.background =
+          "linear-gradient(90deg, #8f6ed5, #e0aaff)";
+        e.currentTarget.style.transform = "scale(1.05)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-          "#5c4033"; // normal
+        e.currentTarget.style.background =
+          "linear-gradient(90deg, #a18cd1, #fbc2eb)";
+        e.currentTarget.style.transform = "scale(1)";
       }}
     >
       Logout

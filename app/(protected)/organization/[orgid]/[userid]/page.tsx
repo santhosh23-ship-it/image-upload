@@ -1,49 +1,65 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Box,
-  Title,
-  Text,
   Card,
-  Loader,
-  Center,
-  Grid,
-  Badge,
-  Divider,
+  Text,
+  Title,
   Stack,
+  Loader,
+  Badge,
+  Group,
+  Divider,
+  Center,
+  Container,
+  Box,
 } from "@mantine/core";
+import { useParams } from "next/navigation";
+
+interface UserType {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  imageCount: number;
+  paymentCount: number;
+  tags: string[];
+}
 
 export default function UserDetailsPage() {
   const params = useParams();
   const userId = params.userid as string;
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!userId) return;
+
     const fetchUser = async () => {
       try {
-        const res = await fetch(`/api/admin/users/${userId}`);
+        const res = await fetch(`/api/user/images/${userId}`);
         const data = await res.json();
 
         if (data.success) {
-          setUser(data.user);
+          setUser({
+            ...data.user,
+            tags: data.user.tags || [],
+          });
         }
       } catch (error) {
-        console.error("Failed to fetch user");
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (userId) fetchUser();
+    fetchUser();
   }, [userId]);
 
   if (loading) {
     return (
-      <Center mt={80}>
+      <Center h="70vh">
         <Loader size="lg" />
       </Center>
     );
@@ -51,71 +67,83 @@ export default function UserDetailsPage() {
 
   if (!user) {
     return (
-      <Center mt={80}>
+      <Center h="70vh">
         <Text fw={500}>User not found</Text>
       </Center>
     );
   }
 
   return (
-    <Box p="xl" style={{ backgroundColor: "#faf5ec", minHeight: "100vh" }}>
-      <Card
-        shadow="sm"
-        padding="xl"
-        radius="md"
-        withBorder
-        style={{ backgroundColor: "#f5e0c3", maxWidth: 700, margin: "auto" }}
-      >
-        <Stack spacing="md">
+    <Box bg="#f8f9fa" mih="100vh" py={60}>
+      <Container size="sm">
+        <Card shadow="lg" radius="lg" p="xl" withBorder>
 
-          {/* Header */}
-          <Title order={3} ta="center">
-            User Details
-          </Title>
+          <Stack gap="lg">
 
-          <Divider />
+            {/* Header */}
+            <Title order={3} ta="center" fw={600}>
+              User Details
+            </Title>
 
-          {/* Basic Info */}
-          <Grid>
-            <Grid.Col span={6}>
-              <Text fw={600}>Name</Text>
-              <Text>{user.name}</Text>
-            </Grid.Col>
+            <Divider />
 
-            <Grid.Col span={6}>
-              <Text fw={600}>Email</Text>
-              <Text>{user.email}</Text>
-            </Grid.Col>
+            {/* Basic Info */}
+            <Stack gap={6}>
+              <Text><b>Name:</b> {user.name}</Text>
+              <Text><b>Email:</b> {user.email}</Text>
+              <Text><b>Role:</b> {user.role}</Text>
+            </Stack>
 
-            <Grid.Col span={6}>
-              <Text fw={600}>Role</Text>
-              <Badge color="blue" variant="light">
-                {user.role}
+            <Divider />
+
+            {/* Stats */}
+            <Group justify="center" gap="md">
+              <Badge
+                size="lg"
+                radius="md"
+                variant="light"
+                color="blue"
+              >
+                Images: {user.imageCount}
               </Badge>
-            </Grid.Col>
 
-            <Grid.Col span={6}>
-              <Text fw={600}>Images Uploaded</Text>
-              <Badge color="grape" variant="light">
-                {user.imageCount ?? user._count?.images ?? 0}
+              <Badge
+                size="lg"
+                radius="md"
+                variant="light"
+                color="green"
+              >
+                Payments: {user.paymentCount}
               </Badge>
-            </Grid.Col>
+            </Group>
 
-            <Grid.Col span={6}>
-              <Text fw={600}>Payment Status</Text>
-              {user.paymentDone ? (
-                <Badge color="green" variant="filled">
-                  Done
-                </Badge>
+            <Divider />
+
+            {/* Tags */}
+            <Stack gap="xs">
+              <Title order={5}>Tags</Title>
+
+              {user.tags.length === 0 ? (
+                <Text c="dimmed">No tags available</Text>
               ) : (
-                <Badge color="red" variant="filled">
-                  Nil
-                </Badge>
+                <Group gap="xs">
+                  {user.tags.map((tag, index) => (
+                    <Badge
+                      key={index}
+                      variant="light"
+                      color="gray"
+                      radius="sm"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </Group>
               )}
-            </Grid.Col>
-          </Grid>
-        </Stack>
-      </Card>
+            </Stack>
+
+          </Stack>
+        </Card>
+      </Container>
     </Box>
   );
 }
