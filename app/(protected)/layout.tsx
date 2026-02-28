@@ -8,43 +8,43 @@ import Topbar from "@/app/components/Topbar";
 import AppNavbar from "@/app/components/AppNavbar";
 import Sidebar from "@/app/components/Sidebar";
 
-export default function ProtectedLayout({
-  children,
-}: {
+interface ProtectedLayoutProps {
   children: React.ReactNode;
-}) {
+}
+
+export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const { status, data: session } = useSession();
   const router = useRouter();
 
-  // ✅ useEffect is always called
+  // Redirect if not logged in
   useEffect(() => {
     if (status !== "loading" && !session) {
       router.push("/login");
     }
   }, [status, session, router]);
 
-  if (status === "loading") return null; // still safe to return early
-
-  if (!session) return null; // wait for redirect
+  if (status === "loading" || !session) return null; // safe early return
 
   const isAdmin = session.user?.role === "ADMIN";
 
   return (
-    <AppShell header={{ height: 60 }} navbar={{ width: 260 }}>
+    <AppShell
+      header={{ height: 60 }}
+      navbar={{ width: 260, breakpoint: 768 }} // ✅ breakpoint added
+    >
+      {/* Top header */}
       <AppShell.Header>
         <Topbar />
       </AppShell.Header>
 
+      {/* Single Navbar with both components */}
       <AppShell.Navbar>
-        <AppNavbar />
-      </AppShell.Navbar>
-
-      <AppShell.Navbar>
+        
         <Sidebar />
       </AppShell.Navbar>
 
+      {/* Main content */}
       <AppShell.Main>{children}</AppShell.Main>
     </AppShell>
-    
   );
 }

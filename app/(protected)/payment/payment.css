@@ -1,0 +1,92 @@
+/* Overall page */
+.payment-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #efe3d0, #f7efe5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Card */
+.payment-card {
+  background: #fffaf3;
+  border: 1px solid #e0c9a6;
+  border-radius: 18px;
+  padding: 40px 30px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 15px 40px rgba(90, 56, 37, 0.15);
+}
+
+/* Icon */
+.payment-card .icon {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+/* Title */
+.payment-card h1 {
+  color: #5a3825;
+  margin-bottom: 10px;
+  font-size: 24px;
+}
+
+/* Subtitle */
+.subtitle {
+  color: #6b4a35;
+  font-size: 15px;
+  margin-bottom: 25px;
+}
+
+/* Price box */
+.price-box {
+  background: #f3e2c7;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 25px;
+}
+
+.price {
+  display: block;
+  font-size: 32px;
+  font-weight: bold;
+  color: #4b2e1f;
+}
+
+.desc {
+  font-size: 14px;
+  color: #6b4a35;
+}
+
+/* Button */
+.pay-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: #5a3825;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.pay-btn:hover:not(:disabled) {
+  background: #47291a;
+  transform: translateY(-1px);
+}
+
+.pay-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Secure text */
+.secure {
+  margin-top: 15px;
+  font-size: 13px;
+  color: #7a5a44;
+}

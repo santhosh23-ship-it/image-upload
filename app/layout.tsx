@@ -1,13 +1,12 @@
-import {
-  MantineProvider,
-  ColorSchemeScript,
-  mantineHtmlProps,
-} from "@mantine/core";
+// app/layout.tsx
+import { MantineProvider, ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
-import Providers from "@/app/components/provider";
-import type { Metadata, Viewport } from "next";
-import ClientProviders from "@/app/provider";
+
+import Providers from "@/app/components/provider"; // SessionProvider
+import ClientProvidersWrapper from "@/app/provider"; // client providers
 import GlobalNotifications from "@/app/notification/GlobalNotifications";
+
+import type { Metadata, Viewport } from "next";
 
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
@@ -23,18 +22,14 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript />
       </head>
-
       <body>
+        {/* ✅ Wrap everything that uses `useSession` */}
         <Providers>
           <MantineProvider
             theme={{
@@ -44,10 +39,15 @@ export default function RootLayout({
             defaultColorScheme="light"
           >
             <Notifications position="top-right" />
-            <ClientProviders />
-            <GlobalNotifications />
 
-            {children}
+            {/* Client-side providers */}
+            <ClientProvidersWrapper>
+              {/* GlobalNotifications now safely inside SessionProvider */}
+              <GlobalNotifications />
+
+              {/* Page content */}
+              {children}
+            </ClientProvidersWrapper>
           </MantineProvider>
         </Providers>
       </body>

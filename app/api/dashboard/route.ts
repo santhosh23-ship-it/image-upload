@@ -1,3 +1,5 @@
+"use server";
+
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -14,27 +16,28 @@ export async function GET() {
       );
     }
 
-   // ===============================
-// USER DASHBOARD
-// ===============================
-if (session.user.role === "USER") {
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-  });
-
-const totalUploads = await prisma.image.count({
-  where: { uploadedById: session.user.id },
-});
-
-  return NextResponse.json({
-    role: "USER",
-    name: user?.name,
-    email: user?.email,
-    totalUploads,
-  });
-}
     // ===============================
-    // PRODUCT OWNER
+    // USER DASHBOARD
+    // ===============================
+    if (session.user.role === "USER") {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+      });
+
+      const totalUploads = await prisma.image.count({
+        where: { uploadedById: session.user.id },
+      });
+
+      return NextResponse.json({
+        role: "USER",
+        name: user?.name,
+        email: user?.email,
+        totalUploads,
+      });
+    }
+
+    // ===============================
+    // PRODUCT OWNER DASHBOARD
     // ===============================
     if (session.user.role === "PRODUCT_OWNER") {
       const organizations = await prisma.organization.findMany({
@@ -55,10 +58,18 @@ const totalUploads = await prisma.image.count({
     }
 
     // ===============================
-    // ADMIN
+    // ADMIN DASHBOARD
     // ===============================
+    // ✅ Ensure organizationId is string, not null
+    if (!session.user.organizationId) {
+      return NextResponse.json(
+        { message: "Organization not assigned" },
+        { status: 400 }
+      );
+    }
+
     const organization = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
+      where: { id: session.user.organizationId }, // now guaranteed string
       include: { users: true },
     });
 
@@ -106,6 +117,7 @@ const totalUploads = await prisma.image.count({
       admins,
       users,
     });
+
   } catch (error) {
     console.error("Dashboard GET error:", error);
     return NextResponse.json(
