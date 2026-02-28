@@ -3,7 +3,7 @@
 import { Table, Button, Group, Image, Badge } from "@mantine/core";
 import { useRouter } from "next/navigation";
 
-export default function OrgTable({ orgs, onEdit, onRefresh }: any) {
+export default function OrgTable({ orgs = [], onEdit, onRefresh }: any) {
   const router = useRouter();
 
   const deleteOrg = async (id: string) => {
@@ -31,69 +31,77 @@ export default function OrgTable({ orgs, onEdit, onRefresh }: any) {
       </thead>
 
       <tbody>
-        {orgs.map((org: any) => (
-          <tr key={org.id}>
-            <td>
-              <Badge variant="light" color="dark">
-                {org.name}
-              </Badge>
-            </td>
+        {Array.isArray(orgs) && orgs.length > 0 ? (
+          orgs.map((org: any) => (
+            <tr key={org.id}>
+              <td>
+                <Badge variant="light" color="dark">
+                  {org.name}
+                </Badge>
+              </td>
 
-            <td>
-              {org.logoUrl ? (
-                <Image
-                  src={org.logoUrl}
-                  radius="md"
-                  w={55}
-                  h={55}
-                  fit="cover"
-                />
-              ) : (
-                "-"
-              )}
-            </td>
+              <td>
+                {org.logoUrl ? (
+                  <Image
+                    src={org.logoUrl}
+                    radius="md"
+                    w={55}
+                    h={55}
+                    fit="cover"
+                  />
+                ) : (
+                  "-"
+                )}
+              </td>
 
-            <td>{org.address ?? "-"}</td>
-            <td>{org.phone ?? "-"}</td>
-            <td>{org.admin?.email ?? "-"}</td>
+              <td>{org.address ?? "-"}</td>
+              <td>{org.phone ?? "-"}</td>
+              <td>{org.admin?.email ?? "-"}</td>
 
-            <td>
-              <Group justify="center" gap="xs">
-                <Button
-                  size="xs"
-                  variant="light"
-                  color="blue"
-                  radius="md"
-                  onClick={() => onEdit(org)}
-                >
-                  Edit
-                </Button>
+              <td>
+                <Group justify="center" gap="xs">
+                  <Button
+                    size="xs"
+                    variant="light"
+                    color="blue"
+                    radius="md"
+                    onClick={() => onEdit(org)}
+                  >
+                    Edit
+                  </Button>
 
-                <Button
-                  size="xs"
-                  variant="light"
-                  color="red"
-                  radius="md"
-                  onClick={() => deleteOrg(org.id)}
-                >
-                  Delete
-                </Button>
+                  <Button
+                    size="xs"
+                    variant="light"
+                    color="red"
+                    radius="md"
+                    onClick={() => deleteOrg(org.id)}
+                  >
+                    Delete
+                  </Button>
 
-                <Button
-                  size="xs"
-                  variant="filled"
-                  color="dark"
-                  radius="md"
-                  onClick={() =>
-                    router.push(`/organization/${org.id}`)
-                  }
-                >
-                  View
-                </Button>
-              </Group>
+                  <Button
+                    size="xs"
+                    variant="filled"
+                    color="dark"
+                    radius="md"
+                    onClick={() =>
+                      router.push(`/organization/${org.id}`)
+                    }
+                  >
+                    View
+                  </Button>
+                </Group>
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={6} style={{ textAlign: "center" }}>
+              No Organizations Found
             </td>
           </tr>
-        ))}
+        )}
       </tbody>
     </Table>
   );

@@ -21,9 +21,21 @@ export default function Page() {
   const [editData, setEditData] = useState<any>(null);
 
   const load = async () => {
-    const res = await fetch("/api/organization");
-    const data = await res.json();
-    setOrgs(data);
+    try {
+      const res = await fetch("/api/organization");
+      const data = await res.json();
+
+
+
+    console.log("API RESPONSE:", data);
+
+    
+      // 🔥 SAFETY CHECK (NO LOGIC CHANGE)
+      setOrgs(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setOrgs([]);
+    }
   };
 
   useEffect(() => {
@@ -52,8 +64,6 @@ export default function Page() {
       }}
     >
       <Container size="lg">
-
-        {/* Header Row */}
         <Group justify="space-between" mb="xl">
           <Title order={2} fw={700}>
             Organization Details
@@ -73,7 +83,6 @@ export default function Page() {
           </Button>
         </Group>
 
-        {/* SINGLE CLEAN CARD */}
         <Card
           shadow="md"
           radius="lg"
