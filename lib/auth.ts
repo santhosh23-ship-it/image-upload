@@ -20,6 +20,7 @@ export const authOptions: NextAuthOptions = {
       },
 
       async authorize(credentials) {
+        console.log("LOGIN TRY:", credentials?.email);
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -30,7 +31,7 @@ export const authOptions: NextAuthOptions = {
             organization: true,
           },
         });
-
+          console.log("PASSWORD MATCH:", isValid);
         if (!user) return null;
 
         const isValid = await bcrypt.compare(
