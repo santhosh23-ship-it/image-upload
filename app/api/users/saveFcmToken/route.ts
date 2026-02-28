@@ -1,27 +1,58 @@
-// filename: app/api/users/saveFcmToken/route.ts
+// app/api/users/saveFcmToken/route.ts
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
     const { userId, fcmToken } = await req.json();
+
     if (!userId || !fcmToken) {
-      return NextResponse.json({ error: "Missing data" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing userId or fcmToken" },
+        { status: 400 }
+      );
     }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { fcmTokens: true },
+    });
 
-    if (!user.fcmTokens.includes(fcmToken)) {
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // ✅ If first time (null), initialize array
+    if (!user.fcmTokens || user.fcmTokens.length === 0) {
       await prisma.user.update({
         where: { id: userId },
-        data: { fcmTokens: { push: fcmToken } },
+        data: {
+          fcmTokens: [fcmToken],
+        },
+      });
+    }
+    // ✅ If token not already saved → push
+    else if (!user.fcmTokens.includes(fcmToken)) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          fcmTokens: {
+            push: fcmToken,
+          },
+        },
       });
     }
 
     return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("Save FCM token error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    console.error("Save FCM token error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

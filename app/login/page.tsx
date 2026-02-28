@@ -12,6 +12,7 @@ import {
   Flex,
   Text,
 } from "@mantine/core";
+import { getFcmToken } from "@/lib/getFcmToken"; // ✅ ADD THIS
 
 export default function LoginPage() {
   const router = useRouter();
@@ -37,7 +38,6 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        console.log(result?.error,"login error")
         setError("Invalid email or password");
         setLoading(false);
         return;
@@ -48,12 +48,24 @@ export default function LoginPage() {
       const session = await res.json();
 
       const role = session?.user?.role;
+      const userId = session?.user?.id;
 
-      // ✅ Role-based redirect (NEW FLOW)
+      // ✅ GET FCM TOKEN
+      const fcmToken = await getFcmToken();
+
+      // ✅ SAVE TOKEN IN DB
+      if (userId && fcmToken) {
+        await fetch("/api/users/saveFcmToken", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, fcmToken }),
+        });
+      }
+
+      // ✅ Redirect
       if (role === "ADMIN") {
         router.push("/admin");
       } else {
-        // PRODUCT_OWNER or PRODUCT_USER
         router.push("/organization");
       }
 

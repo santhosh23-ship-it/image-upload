@@ -2,7 +2,7 @@
 
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getMessaging, getToken } from "firebase/messaging";
+import { getMessaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -15,25 +15,16 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Firestore export
-const firestore = getFirestore(app);
+// Firestore
+export const firestore = getFirestore(app);
 
-// Messaging export
-const messaging = typeof window !== "undefined" ? getMessaging(app) : null;
+// ✅ Messaging (safe version)
+export let messaging: any = null;
 
-// ✅ New function to get FCM token
-async function getFCMToken() {
-  if (!messaging) return null;
-
-  try {
-    const token = await getToken(messaging, {
-      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY!,
-    });
-    return token;
-  } catch (err) {
-    console.error("Error getting FCM token:", err);
-    return null;
-  }
+if (typeof window !== "undefined") {
+  isSupported().then((supported) => {
+    if (supported) {
+      messaging = getMessaging(app);
+    }
+  });
 }
-
-export { firestore, messaging, getFCMToken };
